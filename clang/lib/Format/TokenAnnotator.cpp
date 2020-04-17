@@ -3036,6 +3036,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
         return Style.SpacesInSquareBrackets;
     }
     return (Style.SpaceAfterLogicalNot && Left.is(tok::exclaim)) ||
+           (Style.IsDevialet && Left.is(tok::amp)) ||
            Right.is(TT_BinaryOperator);
   }
 
