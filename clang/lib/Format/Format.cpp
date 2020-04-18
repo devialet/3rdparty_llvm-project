@@ -1124,6 +1124,46 @@ FormatStyle getMicrosoftStyle(FormatStyle::LanguageKind Language) {
   return Style;
 }
 
+FormatStyle getDevialetStyle(FormatStyle::LanguageKind Language) {
+  FormatStyle Style = getMicrosoftStyle(Language);
+  Style.AccessModifierOffset = -4;
+  Style.AlignAfterOpenBracket = FormatStyle::BAS_AlwaysBreak;
+  Style.AlignEscapedNewlines = FormatStyle::ENAS_Left;
+  Style.AlignOperands = false;
+  Style.AlignTrailingComments = false;
+  Style.AllowAllArgumentsOnNextLine = false;
+  Style.AllowAllConstructorInitializersOnNextLine = false;
+  Style.AllowAllParametersOfDeclarationOnNextLine = false;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_Empty;
+  Style.AlwaysBreakBeforeMultilineStrings = true;
+  Style.AlwaysBreakTemplateDeclarations = FormatStyle::BTDS_Yes;
+  Style.BinPackArguments = false;
+  Style.BinPackParameters = false;
+  Style.BraceWrapping.AfterCaseLabel = true;
+  Style.BraceWrapping.AfterNamespace = false;
+  Style.BraceWrapping.AfterUnion = true;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.BreakInheritanceList = FormatStyle::BILS_BeforeComma;
+  Style.BreakConstructorInitializers = FormatStyle::BCIS_BeforeComma;
+  Style.BreakStringLiterals = false;
+  Style.ColumnLimit = 80;
+  Style.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  Style.Cpp11BracedListStyle = false;
+  Style.FixNamespaceComments = false;
+  Style.KeepEmptyLinesAtTheStartOfBlocks = false;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
+  Style.SpaceAfterCStyleCast = true;
+  Style.SpaceAfterLogicalNot = true;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Never;
+  Style.SpacesInAngles = true;
+  Style.SpacesInCStyleCastParentheses = true;
+  Style.SpacesInParentheses = true;
+  Style.SpacesInSquareBrackets = true;
+  Style.Standard = FormatStyle::LS_Auto;
+  return Style;
+}
+
 FormatStyle getNoStyle() {
   FormatStyle NoStyle = getLLVMStyle();
   NoStyle.DisableFormat = true;
@@ -1148,6 +1188,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
     *Style = getGNUStyle();
   } else if (Name.equals_lower("microsoft")) {
     *Style = getMicrosoftStyle(Language);
+  } else if (Name.equals_lower("devialet")) {
+    *Style = getDevialetStyle(Language);
   } else if (Name.equals_lower("none")) {
     *Style = getNoStyle();
   } else {
