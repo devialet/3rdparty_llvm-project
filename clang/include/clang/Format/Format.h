@@ -2078,6 +2078,9 @@ struct FormatStyle {
   /// The way to use tab characters in the resulting file.
   UseTabStyle UseTab;
 
+  /// Hack so that patches for devialet style don't fuck up other styles
+  bool IsDevialet;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
@@ -2189,7 +2192,8 @@ struct FormatStyle {
            SpaceBeforeSquareBrackets == R.SpaceBeforeSquareBrackets &&
            Standard == R.Standard && TabWidth == R.TabWidth &&
            StatementMacros == R.StatementMacros && UseTab == R.UseTab &&
-           UseCRLF == R.UseCRLF && TypenameMacros == R.TypenameMacros;
+           UseCRLF == R.UseCRLF && TypenameMacros == R.TypenameMacros &&
+           IsDevialet == R.IsDevialet;
   }
 
   llvm::Optional<FormatStyle> GetLanguageStyle(LanguageKind Language) const;

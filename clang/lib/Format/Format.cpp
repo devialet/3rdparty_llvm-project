@@ -843,6 +843,7 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
     LLVMStyle.SpacesInContainerLiterals = false;
   }
 
+  LLVMStyle.IsDevialet = false;
   return LLVMStyle;
 }
 
@@ -1161,6 +1162,7 @@ FormatStyle getDevialetStyle(FormatStyle::LanguageKind Language) {
   Style.SpacesInParentheses = true;
   Style.SpacesInSquareBrackets = true;
   Style.Standard = FormatStyle::LS_Auto;
+  Style.IsDevialet = true;
   return Style;
 }
 
