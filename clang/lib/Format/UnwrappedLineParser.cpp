@@ -1876,6 +1876,8 @@ void UnwrappedLineParser::parseNamespace() {
   assert(FormatTok->isOneOf(tok::kw_namespace, TT_NamespaceMacro) &&
          "'namespace' expected");
 
+  bool IsAnonymousNamespace = true;
+
   const FormatToken &InitialToken = *FormatTok;
   nextToken();
   if (InitialToken.is(TT_NamespaceMacro)) {
@@ -1886,16 +1888,25 @@ void UnwrappedLineParser::parseNamespace() {
       if (FormatTok->is(tok::l_square))
         parseSquare();
       else
+      {
+        IsAnonymousNamespace = false;
         nextToken();
+      }
     }
   }
   if (FormatTok->Tok.is(tok::l_brace)) {
-    if (ShouldBreakBeforeBrace(Style, InitialToken))
+    if ((ShouldBreakBeforeBrace(Style, InitialToken) && !Style.IsDevialet) ||
+        (Style.IsDevialet && IsAnonymousNamespace))
+    {
       addUnwrappedLine();
+    }
 
     bool AddLevel = Style.NamespaceIndentation == FormatStyle::NI_All ||
                     (Style.NamespaceIndentation == FormatStyle::NI_Inner &&
                      DeclarationScopeStack.size() > 1);
+    AddLevel = (!Style.IsDevialet && AddLevel) ||
+               (Style.IsDevialet && IsAnonymousNamespace);
+
     parseBlock(/*MustBeDeclaration=*/true, AddLevel);
     // Munch the semicolon after a namespace. This is more common than one would
     // think. Puttin the semicolon into its own line is very ugly.
