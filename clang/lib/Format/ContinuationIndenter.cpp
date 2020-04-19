@@ -1218,6 +1218,10 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
            !Current.isStringLiteral())
     State.StartOfStringLiteral = 0;
 
+  // Hack, retrieve ': ' to stay aligned on ':'
+  if (Style.IsDevialet && Current.isOneOf(TT_CtorInitializerColon, TT_CtorInitializerComma))
+    State.Column -= 2;
+
   State.Column += Current.ColumnWidth;
   State.NextToken = State.NextToken->Next;
 
