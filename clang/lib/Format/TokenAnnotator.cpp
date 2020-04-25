@@ -56,6 +56,36 @@ static bool isLambdaParameterList(const FormatToken *Left) {
          Left->Previous->MatchingParen->is(TT_LambdaLSquare);
 }
 
+bool IsStdFunctionReturnType( const FormatToken* token )
+{
+  //Return type must starts with an identifier
+  if (token->is(tok::identifier) || token->isSimpleTypeSpecifier()) {
+    //Skip identifier::...::identifier sequence
+    while ((token->isOneOf(tok::identifier, tok::coloncolon) ||
+            token->isSimpleTypeSpecifier()) && token->Previous)
+      token = token->Previous;
+
+    //We must have hit '<'
+    if (token->isNot(tok::less))
+      return false;
+
+    if (!token->Previous)
+      return false;
+
+    token = token->Previous;
+
+    if (token->is(tok::identifier) && token->TokenText == "function")
+      return true;
+  }
+
+  return false;
+}
+
+bool IsQtSignalEmit( const FormatToken* token )
+{
+  return (token->is(tok::identifier) && token->TokenText == "emit");
+}
+
 /// A parser that gathers additional information about tokens.
 ///
 /// The \c TokenAnnotator tries to match parenthesis and square brakets and
@@ -2310,6 +2340,12 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                spaceRequiredBefore(Line, *Current)) {
       Current->SpacesRequiredBefore = 1;
     }
+
+    if (Style.IsDevialet && Current->SpacesRequiredBefore == 0 &&
+        Current->is(tok::l_paren) &&
+        (IsStdFunctionReturnType(Current->Previous) ||
+         IsQtSignalEmit(Current->Previous)) )
+      Current->SpacesRequiredBefore = 1;
 
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);
