@@ -1116,6 +1116,22 @@ unsigned UnwrappedLineFormatter::format(
           SourceMgr.getSpellingLineNumber(TheLine.First->Tok.getLocation());
     }
 
+    // Do not format log code
+    if (Style.IsDevialet && TheLine.First &&
+        TheLine.First->is(tok::identifier) &&
+        (TheLine.First->TokenText == "tCritical" ||
+         TheLine.First->TokenText == "tDebug" ||
+         TheLine.First->TokenText == "tFatal" ||
+         TheLine.First->TokenText == "tInfo" ||
+         TheLine.First->TokenText == "tTrace" ||
+         TheLine.First->TokenText == "tWarning" ||
+         TheLine.First->TokenText == "qCritical" ||
+         TheLine.First->TokenText == "qDebug" ||
+         TheLine.First->TokenText == "qFatal" ||
+         TheLine.First->TokenText == "qWarning") &&
+         TheLine.Last && TheLine.Last->is(tok::semi))
+      ShouldFormat = false;
+
     if (ShouldFormat && TheLine.Type != LT_Invalid) {
       if (!DryRun) {
         bool LastLine = Line->First->is(tok::eof);
