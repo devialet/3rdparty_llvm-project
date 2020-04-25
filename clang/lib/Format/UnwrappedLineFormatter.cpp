@@ -1132,6 +1132,12 @@ unsigned UnwrappedLineFormatter::format(
          TheLine.Last && TheLine.Last->is(tok::semi))
       ShouldFormat = false;
 
+    // Do not format output stream code
+    for (const FormatToken *Tok = TheLine.First; Tok; Tok = Tok->Next)
+      if (Style.IsDevialet && Tok->is(tok::lessless) && Tok->Previous &&
+          Tok->Previous->isNot(tok::kw_operator))
+        ShouldFormat = false;
+
     if (ShouldFormat && TheLine.Type != LT_Invalid) {
       if (!DryRun) {
         bool LastLine = Line->First->is(tok::eof);
