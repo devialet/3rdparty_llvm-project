@@ -134,6 +134,11 @@ struct FormatToken {
   /// The \c Token.
   Token Tok;
 
+  bool NamespaceOpeningBrace = false;
+  bool NamespaceClosingBrace = false;
+  bool IsLastNamespaceOpeningBrace = false;
+  bool IsFirstNamespaceClosingBrace = false;
+
   /// The number of newlines immediately before the \c Token.
   ///
   /// This can be used to determine what the user wrote in the original code

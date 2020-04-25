@@ -67,9 +67,24 @@ std::pair<tooling::Replacements, unsigned> TokenAnalyzer::process() {
   FormatTokenLexer Tokens(Env.getSourceManager(), Env.getFileID(),
                           Env.getFirstStartColumn(), Style, Encoding);
 
+  std::list<FormatToken*> NamespaceLBraces;
+  std::list<FormatToken*> NamespaceRBraces;
   UnwrappedLineParser Parser(Style, Tokens.getKeywords(),
-                             Env.getFirstStartColumn(), Tokens.lex(), *this);
+                             Env.getFirstStartColumn(), Tokens.lex(), *this,
+                             NamespaceLBraces, NamespaceRBraces);
   Parser.parse();
+
+  if (NamespaceLBraces.size() == NamespaceRBraces.size() &&
+      NamespaceLBraces.size() > 0) {
+    for (FormatToken* tok : NamespaceLBraces)
+      tok->NamespaceOpeningBrace = true;
+    (*NamespaceLBraces.rbegin())->IsLastNamespaceOpeningBrace = true;
+
+    for (FormatToken* tok : NamespaceRBraces)
+      tok->NamespaceClosingBrace = true;
+    (*NamespaceRBraces.begin())->IsFirstNamespaceClosingBrace = true;
+  }
+
   assert(UnwrappedLines.rbegin()->empty());
   unsigned Penalty = 0;
   for (unsigned Run = 0, RunE = UnwrappedLines.size(); Run + 1 != RunE; ++Run) {

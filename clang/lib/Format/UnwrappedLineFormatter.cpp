@@ -1270,6 +1270,25 @@ void UnwrappedLineFormatter::formatFirstToken(
        Line.Type == LT_ImportStatement))
     Indent = 0;
 
+  // Always add a new empty line after the last namespace opening brace
+  if (Style.IsDevialet && PreviousLine && PreviousLine->Last &&
+      PreviousLine->Last->NamespaceOpeningBrace) {
+    RootToken.MustBreakBefore = true;
+    RootToken.CanBreakBefore = true;
+    RootToken.NewlinesBefore = 1;
+    if (PreviousLine->Last->IsLastNamespaceOpeningBrace)
+      Newlines = 2;
+  }
+
+  // Always add a new empty line before the first namespace closing brace
+  if (Style.IsDevialet && RootToken.NamespaceClosingBrace) {
+    RootToken.MustBreakBefore = true;
+    RootToken.CanBreakBefore = true;
+    RootToken.NewlinesBefore = 1;
+    if (RootToken.IsFirstNamespaceClosingBrace)
+      Newlines = 2;
+  }
+
   Whitespaces->replaceWhitespace(RootToken, Newlines, Indent, Indent,
                                  Line.InPPDirective &&
                                      !RootToken.HasUnescapedNewline);

@@ -225,7 +225,9 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          const AdditionalKeywords &Keywords,
                                          unsigned FirstStartColumn,
                                          ArrayRef<FormatToken *> Tokens,
-                                         UnwrappedLineConsumer &Callback)
+                                         UnwrappedLineConsumer &Callback,
+                                         std::list<FormatToken *> &NamespaceLBraces,
+                                         std::list<FormatToken *> &NamespaceRBraces)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
       CurrentLines(&Lines), Style(Style), Keywords(Keywords),
       CommentPragmasRegex(Style.CommentPragmas), Tokens(nullptr),
@@ -233,7 +235,9 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
       IncludeGuard(Style.IndentPPDirectives == FormatStyle::PPDIS_None
                        ? IG_Rejected
                        : IG_Inited),
-      IncludeGuardToken(nullptr), FirstStartColumn(FirstStartColumn) {}
+      IncludeGuardToken(nullptr), FirstStartColumn(FirstStartColumn),
+      NamespaceOpeningBraces(NamespaceLBraces),
+      NamespaceClosingBraces(NamespaceRBraces) {}
 
 void UnwrappedLineParser::reset() {
   PPBranchLevel = -1;
@@ -531,13 +535,19 @@ size_t UnwrappedLineParser::computePPHash() const {
 }
 
 void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
-                                     bool MunchSemi) {
+                                     bool MunchSemi, bool flagNamespaceBraces) {
   assert(FormatTok->isOneOf(tok::l_brace, TT_MacroBlockBegin) &&
          "'{' or macro block token expected");
   const bool MacroBlock = FormatTok->is(TT_MacroBlockBegin);
   FormatTok->BlockKind = BK_Block;
 
   size_t PPStartHash = computePPHash();
+
+
+  // Keep track of the first { token, we will need to update some of its members
+  // if we successfully parse a namespace block
+  if (flagNamespaceBraces)
+    NamespaceOpeningBraces.push_back(FormatTok);
 
   unsigned InitialLevel = Line->Level;
   nextToken(/*LevelDifference=*/AddLevel ? 1 : 0);
@@ -570,6 +580,9 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
   }
 
   size_t PPEndHash = computePPHash();
+
+  if (flagNamespaceBraces)
+    NamespaceClosingBraces.push_back(FormatTok);
 
   // Munch the closing brace.
   nextToken(/*LevelDifference=*/AddLevel ? -1 : 0);
@@ -1907,7 +1920,8 @@ void UnwrappedLineParser::parseNamespace() {
     AddLevel = (!Style.IsDevialet && AddLevel) ||
                (Style.IsDevialet && IsAnonymousNamespace);
 
-    parseBlock(/*MustBeDeclaration=*/true, AddLevel);
+    parseBlock(/*MustBeDeclaration=*/true, AddLevel, /*MunchSemi=*/true,
+               /*flagNamespaceRBrace=*/! IsAnonymousNamespace);
     // Munch the semicolon after a namespace. This is more common than one would
     // think. Puttin the semicolon into its own line is very ugly.
     if (FormatTok->Tok.is(tok::semi))

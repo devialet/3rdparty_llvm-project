@@ -77,7 +77,9 @@ public:
   UnwrappedLineParser(const FormatStyle &Style,
                       const AdditionalKeywords &Keywords,
                       unsigned FirstStartColumn, ArrayRef<FormatToken *> Tokens,
-                      UnwrappedLineConsumer &Callback);
+                      UnwrappedLineConsumer &Callback,
+                      std::list<FormatToken *> &NamespaceLBraces,
+                      std::list<FormatToken *> &NamespaceRBraces);
 
   void parse();
 
@@ -86,7 +88,7 @@ private:
   void parseFile();
   void parseLevel(bool HasOpeningBrace);
   void parseBlock(bool MustBeDeclaration, bool AddLevel = true,
-                  bool MunchSemi = true);
+                  bool MunchSemi = true, bool flagNamespaceBraces = false);
   void parseChildBlock();
   void parsePPDirective();
   void parsePPDefine();
@@ -276,6 +278,9 @@ private:
 
   friend class ScopedLineState;
   friend class CompoundStatementIndenter;
+
+  std::list<FormatToken*> &NamespaceOpeningBraces;
+  std::list<FormatToken*> &NamespaceClosingBraces;
 };
 
 struct UnwrappedLineNode {
