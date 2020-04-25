@@ -2300,6 +2300,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     calculateFormattingInformation(**I);
   }
 
+  if (Style.IsDevialet && Line.First->TokenText == "Q_PROPERTY")
+    return;
+
   Line.First->TotalLength =
       Line.First->IsMultiline ? Style.ColumnLimit
                               : Line.FirstStartColumn + Line.First->ColumnWidth;
