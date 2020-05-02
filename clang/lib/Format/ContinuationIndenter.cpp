@@ -645,7 +645,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
 
   if (Current.is(TT_LambdaArrow) && Style.Language == FormatStyle::LK_Java)
     State.Stack.back().NoLineBreak = true;
-  if (Current.isMemberAccess() && Previous.is(tok::r_paren) &&
+  if (!Style.IsDevialet && Current.isMemberAccess() && Previous.is(tok::r_paren) &&
       (Previous.MatchingParen &&
        (Previous.TotalLength - Previous.MatchingParen->TotalLength > 10)))
     // If there is a function call with long parameters, break before trailing
