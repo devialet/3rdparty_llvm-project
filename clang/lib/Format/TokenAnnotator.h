@@ -156,8 +156,9 @@ private:
 /// \c UnwrappedLine.
 class TokenAnnotator {
 public:
-  TokenAnnotator(const FormatStyle &Style, const AdditionalKeywords &Keywords)
-      : Style(Style), Keywords(Keywords) {}
+  TokenAnnotator(const SourceManager &Manager, const FormatStyle &Style,
+                 const AdditionalKeywords &Keywords)
+      : SrcManager(Manager), Style(Style), Keywords(Keywords) {}
 
   /// Adapts the indent levels of comment lines to the indent of the
   /// subsequent line.
@@ -188,6 +189,8 @@ private:
   void printDebugInfo(const AnnotatedLine &Line);
 
   void calculateUnbreakableTailLengths(AnnotatedLine &Line);
+
+  const SourceManager &SrcManager;
 
   const FormatStyle &Style;
 

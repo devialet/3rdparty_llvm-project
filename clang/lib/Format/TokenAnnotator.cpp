@@ -93,10 +93,10 @@ bool IsQtSignalEmit( const FormatToken* token )
 /// into template parameter lists.
 class AnnotatingParser {
 public:
-  AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
-                   const AdditionalKeywords &Keywords)
-      : Style(Style), Line(Line), CurrentToken(Line.First), AutoFound(false),
-        Keywords(Keywords) {
+  AnnotatingParser(const SourceManager& Manager, const FormatStyle &Style,
+                   AnnotatedLine &Line, const AdditionalKeywords &Keywords)
+      : SrcManager(Manager), Style(Style), Line(Line), CurrentToken(Line.First),
+        AutoFound(false), Keywords(Keywords) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
     resetTokenMetadata(CurrentToken);
   }
@@ -196,6 +196,10 @@ private:
     FormatToken *Left = CurrentToken->Previous;
     Left->ParentBracket = Contexts.back().ContextKind;
     ScopedContextCreator ContextCreator(*this, tok::l_paren, 1);
+
+    std::vector<FormatToken*> ParamArgs;
+    if (CurrentToken && CurrentToken->isNot(tok::r_paren))
+      ParamArgs.push_back(CurrentToken);
 
     // FIXME: This is a bit of a hack. Do better.
     Contexts.back().ColonIsForRangeExpr =
@@ -353,6 +357,48 @@ private:
         else
           Left->PackingKind = PPK_OnePerLine;
 
+        if (Style.IsDevialet && ParamArgs.size() > 0) {
+          unsigned OpeningParenthesisLineNumber =
+            SrcManager.getExpansionLineNumber(Left->Tok.getLocation());
+
+          // Check if all parameters / arguments are on the same line as the
+          // opening parenthesis is
+          bool AtLeastOneParameterIsBroken = false;
+          for (FormatToken *pa : ParamArgs) {
+            unsigned ParamArgLineNumber =
+              SrcManager.getExpansionLineNumber(pa->Tok.getLocation());
+
+            AtLeastOneParameterIsBroken |=
+              (OpeningParenthesisLineNumber != ParamArgLineNumber);
+          }
+
+          // CurrentToken is ')'
+
+          // Check if we break the column limit rule
+          bool MoreThanColumnLimit = false;
+          if (!AtLeastOneParameterIsBroken) {
+            FormatToken *ParamArgCloser = nullptr;
+
+            if (CurrentToken->Next && CurrentToken->Next->is(tok::semi))
+              ParamArgCloser = CurrentToken->Next;
+            else if (CurrentToken->Next && CurrentToken->Next->isNot(tok::semi))
+              ParamArgCloser = CurrentToken;
+
+            if (ParamArgCloser) {
+              unsigned ParamArgCloserPos =
+                ParamArgCloser->OriginalColumn + ParamArgCloser->ColumnWidth;
+
+              if (ParamArgCloserPos > Style.ColumnLimit)
+                MoreThanColumnLimit = true;
+            }
+          }
+
+          if (AtLeastOneParameterIsBroken || MoreThanColumnLimit) {
+            for (FormatToken *pa : ParamArgs)
+              pa->MustBreakBefore = true;
+          }
+        }
+
         next();
         return true;
       }
@@ -391,6 +437,10 @@ private:
       updateParameterCount(Left, Tok);
       if (CurrentToken && CurrentToken->HasUnescapedNewline)
         HasMultipleLines = true;
+
+      if (CurrentToken && CurrentToken->Previous &&
+          CurrentToken->Previous->is(tok::comma))
+        ParamArgs.push_back(CurrentToken);
     }
     return false;
   }
@@ -1884,6 +1934,7 @@ private:
 
   SmallVector<Context, 8> Contexts;
 
+  const SourceManager &SrcManager;
   const FormatStyle &Style;
   AnnotatedLine &Line;
   FormatToken *CurrentToken;
@@ -2151,7 +2202,7 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
        I != E; ++I) {
     annotate(**I);
   }
-  AnnotatingParser Parser(Style, Line, Keywords);
+  AnnotatingParser Parser(SrcManager, Style, Line, Keywords);
   Line.Type = Parser.parseLine();
 
   // With very deep nesting, ExpressionParser uses lots of stack and the
